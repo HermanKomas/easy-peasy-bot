@@ -99,6 +99,30 @@ controller.hears(
 );
 
 controller.hears(
+    ['test'],
+    ['direct_mention', 'mention', 'direct_message'],
+    function(bot, message){
+        const httpRequest = new XMLHttpRequest();
+    
+        httpRequest.onreadystatechange = function(){
+            if(this.readyState == 4 && this.status == 200) {
+                const response = JSON.parse(this.responseText);
+    
+                response.members.forEach(member => {
+                   bot.reply(message, "@" + member.name);
+                });
+            }
+        }
+    
+        httpRequest.open('POST', 'https://slack.com/api/users.list', true);
+        httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+        httpRequest.setRequestHeader('Authorization', 'Bearer xoxb-489765298608-521576068176-YdWaLVUeKrn7sCNEBEkeQqCB')
+    
+        httpRequest.send(); //async 
+    }
+)
+
+controller.hears(
     ['standup'],
     ['direct_mention', 'mention', 'direct_message'],
     function(bot, message){
@@ -131,7 +155,7 @@ function getRandomStandUpHost(){
     return standUpHostName;
 }
 
-function refreshHostsList(callback){
+function refreshHostsList(){
 
     didnotRunStandupThisWeek = [];
 
@@ -144,8 +168,6 @@ function refreshHostsList(callback){
             response.members.forEach(x => {
                 didnotRunStandupThisWeek.push(x)
             });
-
-            callback()
         }
     }
 
@@ -153,7 +175,7 @@ function refreshHostsList(callback){
     httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
     httpRequest.setRequestHeader('Authorization', 'Bearer xoxb-489765298608-521576068176-rFrzEowYFG1osp64E5ljg4QL')
 
-    httpRequest.send();
+    httpRequest.send(); //async 
 }
 
 function isFriday(){
