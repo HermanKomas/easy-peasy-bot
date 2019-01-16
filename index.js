@@ -7,6 +7,9 @@
  * Define a function for initiating a conversation on installation
  * With custom integrations, we don't have a way to find out who installed us, so we can't message them :(
  */
+let XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+
+let didnotRunStandupThisWeek = []
 
 function onInstallation(bot, installer) {
     if (installer) {
@@ -79,10 +82,86 @@ controller.on('rtm_close', function (bot) {
 /**
  * Core bot logic goes here!
  */
-// BEGIN EDITING HERE!
+controller.hears(
+    ['hello', 'hi', 'greetings', 'yo', 'hey'],
+    ['direct_mention', 'mention', 'direct_message'],
+    function(bot,message) {
+        bot.reply(message,'Hello!');
+    }
+);
+
+controller.hears(
+    ['legen'],
+    ['direct_mention', 'mention', 'direct_message'],
+    function(bot,message) {
+        bot.reply(message,'Wait for it! ...dary! Legendary!');
+    }
+);
+
+controller.hears(
+    ['standup'],
+    ['direct_mention', 'mention', 'direct_message'],
+    function(bot, message){
+        bot.reply(
+            message,
+            'Stand Up is to be hosted by... wait for it...! @' +  
+            getStandUpHost());
+    }
+)
+
+function getStandUpHost(){
+    if(isFriday()){
+        refreshHostsList(getRandomStandUpHost())
+    }else{
+        getRandomStandUpHost()
+    }
+}
+
+function getRandomStandUpHost(){
+    const randomIndex = Math.floor(Math.random()*didnotRunStandupThisWeek.length);
+
+    didnotRunStandupThisWeek.forEach(element => {
+        console.log(element)
+    });
+
+    const standUpHostName = didnotRunStandupThisWeek[randomIndex].name
+
+    didnotRunStandupThisWeek.splice(randomIndex, 1);
+
+    return standUpHostName;
+}
+
+function refreshHostsList(callback){
+
+    didnotRunStandupThisWeek = [];
+
+    const httpRequest = new XMLHttpRequest();
+    
+    httpRequest.onreadystatechange = function(){
+        if(this.readyState == 4 && this.status == 200) {
+            const response = JSON.parse(this.responseText);
+
+            response.members.forEach(x => {
+                didnotRunStandupThisWeek.push(x)
+            });
+
+            callback()
+        }
+    }
+
+    httpRequest.open('POST', 'https://slack.com/api/users.list', true);
+    httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+    httpRequest.setRequestHeader('Authorization', 'Bearer xoxb-489765298608-521576068176-rFrzEowYFG1osp64E5ljg4QL')
+
+    httpRequest.send();
+}
+
+function isFriday(){
+    return (new Date()).getDay() == 5
+}
 
 controller.on('bot_channel_join', function (bot, message) {
-    bot.reply(message, "I'm here!")
+    bot.reply(message, "Whadup!")
 });
 
 controller.hears('hello', 'direct_message', function (bot, message) {
